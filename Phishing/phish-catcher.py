@@ -34,21 +34,13 @@ def main():
     input_path = args.input
     output_path = args.output
 
-   
-    list_email_headers(input_path)
+    report(input_path)
 
-
-def details(file_path):
+def parse(file_path):
     # Open the .eml file in binary mode
     with open(file_path, 'rb') as eml_file:
         # Parse the email using BytesParser with default policy
         msg = BytesParser(policy=policy.default).parse(eml_file)
-    
-    # Extract headers
-    subject = msg['subject']
-    from_email = msg['from']
-    to_email = msg['to']
-    date = msg['date']
 
     # Extract email body
     if msg.is_multipart():
@@ -61,28 +53,35 @@ def details(file_path):
             body = None
     else:
         body = msg.get_content()
+    
+    headers = msg.items()
 
-    # Print extracted information
-    print("Subject:", subject)
-    print("From:", from_email)
-    print("To:", to_email)
-    print("Date:", date)
-    print("\nBody:\n", body)
+    # Return extracted body
+    return headers, body
 
-def list_email_headers(file_path):
+def headers(file_path):
     # Open the .eml file in binary mode
     with open(file_path, 'rb') as eml_file:
         # Parse the email using BytesParser with default policy
         msg = BytesParser(policy=policy.default).parse(eml_file)
     
     # Get all headers as a list of (header_name, value) tuples
-    headers = msg.items()
-
+    
     # Print all headers
-    print("Email Headers:")
+    """print("Email Headers:")
     for header, value in headers:
-        print(f"{header}: {value}")
+        print(f"{header}: {value}")"""
 
+def report(input_path):
+    filename = input_path.replace("\\", "/").split("/")[-1]
+    headers, body = parse(input_path)
+    headers_dict = dict(headers)
+
+    print(f"\nReport of email: {filename}\n")
+    print("=" * 100)
+    print()
+    print(f"From: {headers_dict['From']}")
+    print(f"Return-Path: {headers_dict['Return-Path']}")
 
 if __name__ == "__main__":
     main()
