@@ -48,7 +48,6 @@ def main():
             if os.path.isfile(file_path) and file_name.endswith(".eml"):
                 report(file_path)
 
-
 def parse(file_path):
     # Open the .eml file in binary mode
     with open(file_path, 'rb') as eml_file:
@@ -83,13 +82,15 @@ def parse(file_path):
             'size': size
         })
 
-    
     headers_array = msg.items()
 
-    # Return extracted body
     return headers_array, body, attachments
 
-def check_spoofed_from(headers):
+def check_timestamp(headers):
+    timestamp = headers['Date']
+    print(f"Timestamp: {timestamp}")
+
+def check_spoofed_from(headers, body, attachments):
     from_header = headers['From']
     reply_to_header = headers.get('Reply-To')
 
@@ -100,18 +101,14 @@ def check_spoofed_from(headers):
             print("'From' and 'Reply-To' headers are inconsistent:\n")
             print(f"From: {from_header}")
             print(f"Reply-To: {reply_to_header}")
-
-def check_timestamp(headers):
-    timestamp = headers['Date']
-    print(f"Timestamp: {timestamp}")
     
-def check_attachments(attachments):
+def check_attachments(headers, body, attachments):
     
     return attachments
 
-def print_report_item(funct, parameter):
+def print_report_item(funct, headers, body, attachments):
     print()
-    result = funct(parameter)
+    result = funct(headers, body, attachments)
     if result is not None:
         print(result)
     print()
@@ -121,13 +118,22 @@ def report(input_path):
     filename = input_path.replace("\\", "/").split("/")[-1]
     headers_array, body, attachments = parse(input_path)
     headers = dict(headers_array)
+    red_flag_checks = [
+        check_spoofed_from,
+        check_attachments
+
+    ]
 
     print("=" * 100)
     print(f"\nReport of email: {filename}")
     check_timestamp(headers)
     print("-" * 100)
-    print_report_item(check_spoofed_from, headers)
-    print_report_item(check_attachments, attachments)
+
+    # Only print checks that fail
+    for check in red_flag_checks:
+        if check(headers, body, attachments) != None:
+            print_report_item(check, headers, body, attachments)
+    
     print()
     print("=" * 100)
 
