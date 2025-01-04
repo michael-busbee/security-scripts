@@ -3,6 +3,7 @@ import argparse
 import email
 from email import policy
 from email.parser import BytesParser
+import hashlib
 
 def main():
     parser = argparse.ArgumentParser(
@@ -79,7 +80,8 @@ def parse(file_path):
         attachments.append({
             'filename': filename,
             'content_type': content_type,
-            'size': size
+            'size': size,
+            'content': content
         })
 
     headers_array = msg.items()
@@ -104,7 +106,18 @@ def check_spoofed_from(headers, body, attachments):
     
 def check_attachments(headers, body, attachments):
     
-    return attachments
+    for item in attachments:
+        sha256_hash = hashlib.sha256(item['content']).hexdigest()
+        print(f"Filename: {item['filename']}")
+        print(f"Content Type: {item['content_type']}")
+        print(f"Size: {item['size']}")
+        print(f"sha256 hash: {sha256_hash}")
+
+def check_IOCs(headers, body, attachments):
+    
+    #print(headers)
+    print(body)
+    return
 
 def print_report_item(funct, headers, body, attachments):
     print()
@@ -120,8 +133,8 @@ def report(input_path):
     headers = dict(headers_array)
     red_flag_checks = [
         check_spoofed_from,
-        check_attachments
-
+        check_attachments,
+        check_IOCs
     ]
 
     print("=" * 100)
@@ -132,7 +145,8 @@ def report(input_path):
     # Only print checks that fail
     for check in red_flag_checks:
         if check(headers, body, attachments) != None:
-            print_report_item(check, headers, body, attachments)
+            if attachments != []:
+                print_report_item(check, headers, body, attachments)
     
     print()
     print("=" * 100)
