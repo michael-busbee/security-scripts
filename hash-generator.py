@@ -1,5 +1,6 @@
 import hashlib
 from pathlib import Path
+import sys
 
 def prehash(user_input):
     # Initialize the output as an empty byte string
