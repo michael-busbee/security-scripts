@@ -35,6 +35,18 @@ def md5_hash(data):
 def sha256_hash(data):
     return hashlib.sha256(data).hexdigest()
 
+def sha1_hash(data):
+    return hashlib.sha1(data).hexdigest()
+
+def sha224_hash(data):
+    return hashlib.sha224(data).hexdigest()
+
+def sha384_hash(data):
+    return hashlib.sha384(data).hexdigest()
+
+def sha512_hash(data):
+    return hashlib.sha512(data).hexdigest()
+
 def main():
     import sys
     if len(sys.argv) < 3:
@@ -52,8 +64,16 @@ def main():
         print(md5_hash(data))
     elif algorithm == "sha256":
         print(sha256_hash(data))
+    elif algorithm == "sha1":
+        print(sha1_hash(data))
+    elif algorithm == "sha224":
+        print(sha224_hash(data))
+    elif algorithm == "sha384":
+        print(sha384_hash(data))
+    elif algorithm == "sha512":
+        print(sha512_hash(data))
     else:
-        print(f"Warning: Unsupported algorithm '{algorithm}'. Use 'md5' or 'sha256'.")
+        print(f"Warning: Unsupported algorithm '{algorithm}'. Use 'md5', 'sha1', 'sha224', 'sha256', 'sha384', or 'sha512'.")
 
 if __name__ == "__main__":
     main()
