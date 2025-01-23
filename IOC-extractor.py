@@ -3,6 +3,10 @@ import docx
 import PyPDF2
 from email import policy
 from email.parser import BytesParser
+from openpyxl import load_workbook  # For .xlsx files
+from pptx import Presentation  # For .pptx files
+from pyrtf_ng import Rtf15Reader, plaintext  # For .rtf files
+
 
 def read_text(file_path):
 
@@ -35,6 +39,36 @@ def read_text(file_path):
             with open(file_path, 'rb') as file:
                 msg = BytesParser(policy=policy.default).parse(file)
                 extracted_text = msg.get_body(preferencelist=('plain')).get_content() if msg.is_multipart() else msg.get_content()
+        
+        
+        elif file_extension == ".xlsx":
+            # Read XLSX file
+            workbook = load_workbook(file_path, read_only=True)
+            lines = []
+            for sheet in workbook:
+                for row in sheet.iter_rows(values_only=True):
+                    cells = [(str(cell) if cell is not None else "") for cell in row]
+                    lines.append("\t".join(cells))
+            extracted_text = "\n".join(lines)
+
+        
+        elif file_extension == ".pptx":
+            # Read PPTX file
+            presentation = Presentation(file_path)
+            slides_text = []
+            for slide in presentation.slides:
+                for shape in slide.shapes:
+                    if shape.has_text_frame:
+                        slides_text.append(shape.text)
+            extracted_text = "\n".join(slides_text)
+
+        
+        elif file_extension == ".rtf":
+            # Read RTF file
+            with open(file_path, "rb") as f:
+                doc = Rtf15Reader.read(f)
+            extracted_text = plaintext.PlaintextWriter.write(doc).getvalue()
+        
         
         else:
             # Read text file
