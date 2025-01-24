@@ -6,7 +6,7 @@ from email.parser import BytesParser
 from openpyxl import load_workbook  # For .xlsx files
 from pptx import Presentation  # For .pptx files
 from pyrtf_ng import Rtf15Reader, plaintext  # For .rtf files
-
+import re
 
 def read_text(file_path):
 
@@ -79,6 +79,114 @@ def read_text(file_path):
         raise ValueError(f"An error occurred while reading the file '{file_path}': {e}")
 
     return extracted_text
+
+
+
+def scan_text(text):
+    # Dictionary to store found IOCs
+    iocs_found = {
+        "ip_addresses": [],
+        "domains": [],
+        "urls": [],
+        "dns_records": [],
+        "user_agents": [],
+        "md5_hashes": [],
+        "sha256_hashes": [],
+        "file_names": [],
+        "windows_registry_keys": [],
+        "email_addresses": [],
+        "bitcoin_addresses": [],
+        "ethereum_addresses": [],
+        "twitter_handles": [],
+        "telegram_usernames": [],
+        "discord_usernames": [],
+        "mac_addresses": []
+    }
+
+    # IP (IPv4) addresses
+    iocs_found["ip_addresses"] = re.findall(
+        r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b", text
+    )
+
+    # Domain names (very simplified pattern)
+    iocs_found["domains"] = re.findall(
+        r"\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b", text
+    )
+
+    # URLs (simple pattern for http/https)
+    iocs_found["urls"] = re.findall(
+        r"(https?://[^\s]+)", text
+    )
+
+    # DNS records (basic match for common record types)
+    iocs_found["dns_records"] = re.findall(
+        r"\b(?:A|AAAA|CNAME|MX|NS|SOA|TXT|SRV)\b", text, flags=re.IGNORECASE
+    )
+
+    # User-Agents (capture text after "User-Agent:" on a line)
+    iocs_found["user_agents"] = re.findall(
+        r"(?im)^(?:user-agent):\s*(.+)$", text
+    )
+
+    # MD5 hashes (32 hex chars)
+    iocs_found["md5_hashes"] = re.findall(
+        r"\b[a-fA-F0-9]{32}\b", text
+    )
+
+    # SHA256 hashes (64 hex chars)
+    iocs_found["sha256_hashes"] = re.findall(
+        r"\b[a-fA-F0-9]{64}\b", text
+    )
+
+    # File names (basic pattern: some chars + extension)
+    iocs_found["file_names"] = re.findall(
+        r"\b[\w,\s-]+\.[A-Za-z0-9]{1,5}\b", text
+    )
+
+    # Windows Registry Keys (common root keys + path)
+    iocs_found["windows_registry_keys"] = re.findall(
+        r"\b(HKEY_LOCAL_MACHINE|HKEY_CURRENT_USER|HKEY_CLASSES_ROOT|HKEY_USERS|HKEY_CURRENT_CONFIG)\\[^\s]*",
+        text
+    )
+
+    # Email addresses
+    iocs_found["email_addresses"] = re.findall(
+        r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", text
+    )
+
+    # Bitcoin addresses (simple pattern matching 1/3/bc1)
+    iocs_found["bitcoin_addresses"] = re.findall(
+        r"\b(?:[13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-zA-HJ-NP-Z0-9]{39,59})\b",
+        text
+    )
+
+    # Ethereum addresses (starts with 0x + 40 hex)
+    iocs_found["ethereum_addresses"] = re.findall(
+        r"\b0x[a-fA-F0-9]{40}\b", text
+    )
+
+    # Twitter handles (up to 15 alphanumeric or underscore chars after @)
+    iocs_found["twitter_handles"] = re.findall(
+        r"(?<!\S)@([A-Za-z0-9_]{1,15})(?!\S)", text
+    )
+
+    # Telegram username (5 to 32 alphanumeric/underscore chars after @)
+    iocs_found["telegram_usernames"] = re.findall(
+        r"(?<!\S)@[a-zA-Z0-9_]{5,32}(?!\S)", text
+    )
+
+    # Discord usernames (2 to 32 word chars + # + 4 digits)
+    iocs_found["discord_usernames"] = re.findall(
+        r"\b[A-Za-z0-9_]{2,32}#[0-9]{4}\b", text
+    )
+
+    # MAC addresses (6 pairs of hex separated by : or -)
+    iocs_found["mac_addresses"] = re.findall(
+        r"\b(?:[0-9A-Fa-f]{2}[-:]){5}[0-9A-Fa-f]{2}\b", text
+    )
+
+    return iocs_found
+
 
 def main():
     print(read_text("testdoc.docx"))
